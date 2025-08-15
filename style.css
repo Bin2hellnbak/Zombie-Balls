@@ -188,3 +188,7 @@ button:hover {
 .players-table tr:last-child {
     border-bottom: none;
 }
+#refreshServersBtn {
+    display: block;
+    margin: 0.5em auto 1em auto;
+}
