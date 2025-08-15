@@ -130,7 +130,7 @@ button:hover {
     box-shadow: 0 1px 4px #0002;
 }
 .kick-btn {
-    margin-left: 1em;
+    margin-left: 0;
     min-width: 70px;
     padding: 0.4em 1em;
     background: #e57373;
@@ -155,4 +155,32 @@ button:hover {
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+.players-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5em;
+    background: #232323;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px #0002;
+}
+.players-table th, .players-table td {
+    padding: 0.7em 1em;
+    text-align: center;
+    color: #eee;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-size: 1.05em;
+}
+.players-table th {
+    background: #2c2c2c;
+    color: #8fbc8f;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+.players-table tr {
+    border-bottom: 1px solid #333;
+}
+.players-table tr:last-child {
+    border-bottom: none;
 }
