@@ -31,10 +31,15 @@ function renderPlayers(players) {
     if (controlsTh) {
         controlsTh.style.display = (player === host) ? '' : 'none';
     }
-    // If not host and player is not in the list, they were kicked
+    // If not host and player is not in the list, they were kicked or host left
     if (player !== host && !players.some(pl => pl.name === player) && !kicked) {
         kicked = true;
-        alert('You were kicked from the server by the host.');
+        // Check if host is still present
+        if (!players.some(pl => pl.name === host)) {
+            alert('The host left the server.');
+        } else {
+            alert('You were kicked from the server by the host.');
+        }
         window.location.href = 'index.html';
         return;
     }

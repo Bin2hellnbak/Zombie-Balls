@@ -157,9 +157,11 @@ button:hover {
     justify-content: space-between;
 }
 .players-table {
-    width: 100%;
+    width: 50%;
+    min-width: 320px;
+    max-width: 600px;
+    margin: 0 auto 1.5em auto;
     border-collapse: collapse;
-    margin-bottom: 1.5em;
     background: #232323;
     border-radius: 8px;
     overflow: hidden;
