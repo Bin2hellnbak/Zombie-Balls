@@ -130,7 +130,7 @@ button:hover {
     box-shadow: 0 1px 4px #0002;
 }
 .kick-btn {
-    margin-left: 0;
+    margin-left: 0.5em;
     min-width: 70px;
     padding: 0.4em 1em;
     background: #e57373;
@@ -142,9 +142,15 @@ button:hover {
     font-size: 1rem;
     font-weight: 600;
     transition: background 0.2s;
+    margin-top: 0.3em;
 }
-.kick-btn:hover {
-    background: #c62828;
+.kick-btn.ready {
+    background: #8fbc8f;
+    color: #222;
+}
+.kick-btn.unready {
+    background: #e57373;
+    color: #fff;
 }
 .player-item-card {
     margin-bottom: 0.7em;
@@ -174,6 +180,7 @@ button:hover {
     color: #eee;
     font-family: 'Segoe UI', 'Arial', sans-serif;
     font-size: 1.05em;
+    vertical-align: middle;
 }
 .players-table th, .players-table td {
     width: auto;
@@ -193,4 +200,45 @@ button:hover {
 #refreshServersBtn {
     display: block;
     margin: 0.5em auto 1em auto;
+}
+#startGameBtn {
+    display: block;
+    margin: 1em auto 0 auto;
+    padding: 0.7em 2em;
+    font-size: 1.2em;
+    background: #8fbc8f;
+    color: #222;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 1px 4px #0002;
+    transition: background 0.2s;
+}
+#startGameBtn:disabled {
+    background: #aaa;
+    color: #666;
+    cursor: not-allowed;
+}
+.server-actions-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5em;
+    margin-top: 1.5em;
+}
+#leaveServerBtn {
+    padding: 0.7em 2em;
+    font-size: 1.2em;
+    background: #e57373;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 1px 4px #0002;
+    transition: background 0.2s;
+}
+#leaveServerBtn:hover {
+    background: #c62828;
 }

@@ -15,12 +15,17 @@
                 <tr>
                     <th>Name</th>
                     <th>Ping</th>
+                    <th>Ready Status</th>
+                    <th class="ready-btn-th"></th>
                     <th class="controls-th">Host Controls</th>
                 </tr>
             </thead>
             <tbody id="playersList"></tbody>
         </table>
-        <button onclick="window.location.href='index.html'">Back to Main</button>
+        <div class="server-actions-row">
+            <button onclick="window.location.href='index.html'" id="leaveServerBtn">Leave Server</button>
+            <button id="startGameBtn" style="display:none;">Start Game</button>
+        </div>
     </div>
     <script src="host.js"></script>
 </body>

@@ -38,7 +38,7 @@ app.post('/servers', (req, res) => {
         return res.status(400).json({ error: 'Missing name or host' });
     }
     // Each server has a name, password, host, and players array
-    servers.push({ name, password, host, players: [{ name: host, ping: null }] });
+    servers.push({ name, password, host, players: [{ name: host, ping: null, ready: false }] });
     saveServers();
     res.json({ success: true });
 });
@@ -52,7 +52,27 @@ app.post('/servers/join', (req, res) => {
     if (server.password && server.password !== password) {
         return res.status(403).json({ error: 'Incorrect password' });
     }
-    if (!server.players.some(p => p.name === player)) server.players.push({ name: player, ping: null });
+    if (!server.players.some(p => p.name === player)) server.players.push({ name: player, ping: null, ready: false });
+// Set player ready status
+app.post('/servers/:name/ready', (req, res) => {
+    const server = servers.find(s => s.name === req.params.name);
+    if (!server) return res.status(404).json({ error: 'Server not found' });
+    const { player, ready } = req.body;
+    const p = server.players.find(pl => pl.name === player);
+    if (p) {
+        p.ready = !!ready;
+        saveServers();
+    }
+    res.json({ success: true });
+});
+
+// Check if all players are ready
+app.get('/servers/:name/allready', (req, res) => {
+    const server = servers.find(s => s.name === req.params.name);
+    if (!server) return res.status(404).json({ error: 'Server not found' });
+    const allReady = server.players.length > 0 && server.players.every(pl => pl.ready);
+    res.json({ allReady });
+});
     saveServers();
     res.json({ success: true });
 });

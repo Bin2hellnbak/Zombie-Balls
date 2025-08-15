@@ -12,16 +12,16 @@ async function fetchPlayers() {
     try {
         const res = await fetch(`/servers/${encodeURIComponent(serverName)}/players`);
         const players = await res.json();
-        renderPlayers(players);
+        await renderPlayers(players);
     } catch {
-        renderPlayers([]);
+        await renderPlayers([]);
     }
 }
 
 let kicked = false;
 let lastPing = null;
 
-function renderPlayers(players) {
+async function renderPlayers(players) {
     const playersList = document.getElementById('playersList');
     playersList.innerHTML = '';
     const host = new URLSearchParams(window.location.search).get('host');
@@ -31,6 +31,11 @@ function renderPlayers(players) {
     if (controlsTh) {
         controlsTh.style.display = (player === host) ? '' : 'none';
     }
+    // Show/hide ready button column header
+    const readyBtnTh = document.querySelector('.players-table th.ready-btn-th');
+    if (readyBtnTh) {
+        readyBtnTh.style.display = '';
+    }
     // Adjust column spans for non-hosts
     const table = document.querySelector('.players-table');
     if (table) {
@@ -38,8 +43,8 @@ function renderPlayers(players) {
         rows.forEach(row => {
             if (player !== host) {
                 // Remove controls cell for non-hosts
-                if (row.children.length === 3) {
-                    row.removeChild(row.children[2]);
+                if (row.children.length === 5) {
+                    row.removeChild(row.children[4]);
                 }
             }
         });
@@ -56,6 +61,7 @@ function renderPlayers(players) {
         window.location.href = 'index.html';
         return;
     }
+    let allReady = players.length > 0 && players.every(pl => pl.ready);
     players.forEach(pl => {
         const tr = document.createElement('tr');
         // Name cell
@@ -68,6 +74,30 @@ function renderPlayers(players) {
         const pingTd = document.createElement('td');
         pingTd.textContent = pl.ping !== null ? `${pl.ping} ms` : '';
         tr.appendChild(pingTd);
+        // Ready status cell
+        const readyTd = document.createElement('td');
+        readyTd.textContent = pl.ready ? 'True' : 'False';
+        readyTd.style.color = pl.ready ? '#8fbc8f' : '#e57373';
+        tr.appendChild(readyTd);
+        // Ready button cell
+        const readyBtnTd = document.createElement('td');
+        readyBtnTd.style.textAlign = 'center';
+        if (pl.name === player) {
+            const readyBtn = document.createElement('button');
+            readyBtn.textContent = pl.ready ? 'Unready' : 'Ready';
+            readyBtn.className = 'kick-btn';
+            readyBtn.style.background = pl.ready ? '#e57373' : '#8fbc8f';
+            readyBtn.onclick = async function() {
+                await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/ready`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ player, ready: !pl.ready })
+                });
+                fetchPlayers();
+            };
+            readyBtnTd.appendChild(readyBtn);
+        }
+        tr.appendChild(readyBtnTd);
         // Controls cell (only for host)
         if (player === host) {
             const controlsTd = document.createElement('td');
@@ -90,6 +120,32 @@ function renderPlayers(players) {
         }
         playersList.appendChild(tr);
     });
+    // Show start game button for host if all ready
+    const startBtn = document.getElementById('startGameBtn');
+    if (startBtn) {
+        if (player === host && allReady) {
+            startBtn.style.display = '';
+            startBtn.onclick = async function() {
+                startBtn.disabled = true;
+                let count = 5;
+                startBtn.textContent = 'Starting in ' + count + '...';
+                const interval = setInterval(() => {
+                    count--;
+                    startBtn.textContent = 'Starting in ' + count + '...';
+                    if (count === 0) {
+                        clearInterval(interval);
+                        startBtn.textContent = 'Start Game';
+                        startBtn.disabled = false;
+                    }
+                }, 1000);
+            };
+        } else {
+            startBtn.style.display = 'none';
+        }
+    } else {
+        // Hide start button for non-hosts
+        if (startBtn) startBtn.style.display = 'none';
+    }
 }
 
 // Periodically send ping to server
