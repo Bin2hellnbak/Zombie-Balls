@@ -93,5 +93,7 @@ document.getElementById('hostBtn').addEventListener('click', async function() {
     }
 });
 
+document.getElementById('refreshServersBtn').addEventListener('click', fetchServers);
+
 // Initial render
 fetchServers();
