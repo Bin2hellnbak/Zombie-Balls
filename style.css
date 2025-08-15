@@ -147,10 +147,14 @@ button:hover {
 .kick-btn.ready {
     background: #8fbc8f;
     color: #222;
+    margin: 0 auto;
+    display: block;
 }
 .kick-btn.unready {
     background: #e57373;
     color: #fff;
+    margin: 0 auto;
+    display: block;
 }
 .player-item-card {
     margin-bottom: 0.7em;
@@ -214,6 +218,11 @@ button:hover {
     cursor: pointer;
     box-shadow: 0 1px 4px #0002;
     transition: background 0.2s;
+    margin-top: 0;
+}
+#startGameBtn.abort {
+    background: orange;
+    color: #fff;
 }
 #startGameBtn:disabled {
     background: #aaa;
@@ -229,6 +238,7 @@ button:hover {
 }
 #leaveServerBtn, #startGameBtn {
     align-self: center;
+    margin-top: 0;
 }
 #leaveServerBtn {
     padding: 0.7em 2em;
@@ -244,4 +254,8 @@ button:hover {
 }
 #leaveServerBtn:hover {
     background: #c62828;
+}
+.ready-btn-th, .players-table td.ready-btn-td {
+    text-align: center;
+    vertical-align: middle;
 }

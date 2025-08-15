@@ -21,7 +21,6 @@ async function fetchPlayers() {
 let kicked = false;
 let lastPing = null;
 let gameStarting = false;
-let gameCountdown = 0;
 
 async function renderPlayers(players) {
     const playersList = document.getElementById('playersList');
@@ -83,12 +82,12 @@ async function renderPlayers(players) {
         tr.appendChild(readyTd);
         // Ready button cell
         const readyBtnTd = document.createElement('td');
+        readyBtnTd.className = 'ready-btn-td';
         readyBtnTd.style.textAlign = 'center';
         if (pl.name === player) {
             const readyBtn = document.createElement('button');
             readyBtn.textContent = pl.ready ? 'Unready' : 'Ready';
-            readyBtn.className = 'kick-btn';
-            readyBtn.style.background = pl.ready ? '#e57373' : '#8fbc8f';
+            readyBtn.className = pl.ready ? 'kick-btn ready' : 'kick-btn unready';
             readyBtn.onclick = async function() {
                 await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/ready`, {
                     method: 'POST',
@@ -127,18 +126,19 @@ async function renderPlayers(players) {
     if (startBtn) {
         if (player === host && allReady) {
             startBtn.style.display = '';
-            startBtn.textContent = gameStarting ? `Starting in ${gameCountdown}... (Abort)` : 'Start Game';
+            startBtn.textContent = gameStarting ? 'Abort' : 'Start Game';
+            startBtn.classList.toggle('abort', gameStarting);
             startBtn.disabled = false;
             startBtn.onclick = async function() {
                 if (!gameStarting) {
                     gameStarting = true;
-                    gameCountdown = 5;
                     await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/start`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ countdown: gameCountdown })
+                        body: JSON.stringify({ countdown: 1 }) // just a flag, not a real countdown
                     });
-                    startBtn.textContent = `Starting in ${gameCountdown}... (Abort)`;
+                    startBtn.textContent = 'Abort';
+                    startBtn.classList.add('abort');
                 } else {
                     // Abort
                     gameStarting = false;
@@ -148,46 +148,29 @@ async function renderPlayers(players) {
                         body: JSON.stringify({ countdown: 0 })
                     });
                     startBtn.textContent = 'Start Game';
+                    startBtn.classList.remove('abort');
                 }
             };
         } else {
             startBtn.style.display = 'none';
         }
     }
-    // Show countdown for all players
+    // Remove countdown display for all players
     const actionsRow = document.querySelector('.server-actions-row');
     if (actionsRow) {
         let countdownDiv = document.getElementById('gameCountdownDiv');
-        if (!countdownDiv) {
-            countdownDiv = document.createElement('div');
-            countdownDiv.id = 'gameCountdownDiv';
-            countdownDiv.style.marginLeft = '2em';
-            countdownDiv.style.fontWeight = 'bold';
-            countdownDiv.style.fontSize = '1.2em';
-            actionsRow.appendChild(countdownDiv);
-        }
-        if (gameStarting && gameCountdown > 0) {
-            countdownDiv.textContent = `Game starting in ${gameCountdown}...`;
-        } else {
-            countdownDiv.textContent = '';
-        }
+        if (countdownDiv) countdownDiv.textContent = '';
     }
 }
 
-// Poll for game start countdown
+// Poll for game start status
 async function pollGameStart() {
     const serverName = await getQueryParam('server');
     if (!serverName) return;
     try {
         const res = await fetch(`/servers/${encodeURIComponent(serverName)}/start`);
         const data = await res.json();
-        if (data.countdown && data.countdown > 0) {
-            gameStarting = true;
-            gameCountdown = data.countdown;
-        } else {
-            gameStarting = false;
-            gameCountdown = 0;
-        }
+        gameStarting = !!data.countdown;
         renderPlayers(await (await fetch(`/servers/${encodeURIComponent(serverName)}/players`)).json());
     } catch {}
 }
