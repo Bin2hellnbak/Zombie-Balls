@@ -31,6 +31,19 @@ function renderPlayers(players) {
     if (controlsTh) {
         controlsTh.style.display = (player === host) ? '' : 'none';
     }
+    // Adjust column spans for non-hosts
+    const table = document.querySelector('.players-table');
+    if (table) {
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            if (player !== host) {
+                // Remove controls cell for non-hosts
+                if (row.children.length === 3) {
+                    row.removeChild(row.children[2]);
+                }
+            }
+        });
+    }
     // If not host and player is not in the list, they were kicked or host left
     if (player !== host && !players.some(pl => pl.name === player) && !kicked) {
         kicked = true;
@@ -55,24 +68,26 @@ function renderPlayers(players) {
         const pingTd = document.createElement('td');
         pingTd.textContent = pl.ping !== null ? `${pl.ping} ms` : '';
         tr.appendChild(pingTd);
-        // Controls cell
-        const controlsTd = document.createElement('td');
-        controlsTd.style.textAlign = 'center';
-        if (player === host && pl.name !== host) {
-            const kickBtn = document.createElement('button');
-            kickBtn.textContent = 'Kick';
-            kickBtn.className = 'kick-btn';
-            kickBtn.onclick = async function() {
-                await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/kick`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ player: pl.name, requester: host })
-                });
-                fetchPlayers();
-            };
-            controlsTd.appendChild(kickBtn);
+        // Controls cell (only for host)
+        if (player === host) {
+            const controlsTd = document.createElement('td');
+            controlsTd.style.textAlign = 'center';
+            if (pl.name !== host) {
+                const kickBtn = document.createElement('button');
+                kickBtn.textContent = 'Kick';
+                kickBtn.className = 'kick-btn';
+                kickBtn.onclick = async function() {
+                    await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/kick`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ player: pl.name, requester: host })
+                    });
+                    fetchPlayers();
+                };
+                controlsTd.appendChild(kickBtn);
+            }
+            tr.appendChild(controlsTd);
         }
-        tr.appendChild(controlsTd);
         playersList.appendChild(tr);
     });
 }

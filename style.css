@@ -174,7 +174,9 @@ button:hover {
     color: #eee;
     font-family: 'Segoe UI', 'Arial', sans-serif;
     font-size: 1.05em;
-    width: 33%;
+}
+.players-table th, .players-table td {
+    width: auto;
 }
 .players-table th {
     background: #2c2c2c;
