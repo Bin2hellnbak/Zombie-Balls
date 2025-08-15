@@ -49,9 +49,9 @@ function renderServers(servers) {
                 }
             }
             const playerName = document.getElementById('playerName').value.trim();
-            // Player name: 1-10 letters/numbers, at least 1 letter
-            if (!/^(?=.*[a-zA-Z])[a-zA-Z0-9]{1,10}$/.test(playerName)) {
-                alert('Player name must be 1-10 characters, only letters and numbers, and contain at least one letter.');
+            // Player name: 1-10 chars, letters/numbers/spaces, at least 1 letter, not only spaces, not starting with space
+            if (!/^(?=.*[a-zA-Z])[a-zA-Z0-9 ]{1,10}$/.test(playerName) || /^\s/.test(playerName) || playerName.trim().length === 0) {
+                alert('Player name must be 1-10 characters, only letters, numbers, and spaces, must contain at least one letter, cannot start with a space or be only spaces.');
                 return;
             }
             try {
@@ -83,16 +83,32 @@ document.getElementById('hostBtn').addEventListener('click', async function() {
     const playerName = document.getElementById('playerName').value.trim();
     const serverName = document.getElementById('serverName').value.trim();
     const serverPassword = document.getElementById('serverPassword').value;
-    // Player name: 1-10 letters/numbers, at least 1 letter
-    if (!/^(?=.*[a-zA-Z])[a-zA-Z0-9]{1,10}$/.test(playerName)) {
-        alert('Player name must be 1-10 characters, only letters and numbers, and contain at least one letter.');
+    // Player name: 1-10 chars, letters/numbers/spaces, at least 1 letter, not only spaces, not starting with space
+    if (!/^(?=.*[a-zA-Z])[a-zA-Z0-9 ]{1,10}$/.test(playerName) || /^\s/.test(playerName) || playerName.trim().length === 0) {
+        alert('Player name must be 1-10 characters, only letters, numbers, and spaces, must contain at least one letter, cannot start with a space or be only spaces.');
         return;
     }
-    // Server name: 1-10 letters/numbers, at least 1 letter
-    if (!/^(?=.*[a-zA-Z])[a-zA-Z0-9]{1,10}$/.test(serverName)) {
-        alert('Server name must be 1-10 characters, only letters and numbers, and contain at least one letter.');
+    // Server name: 1-10 chars, letters/numbers/spaces, at least 1 letter, not only spaces, not starting with space
+    if (!/^(?=.*[a-zA-Z])[a-zA-Z0-9 ]{1,10}$/.test(serverName) || /^\s/.test(serverName) || serverName.trim().length === 0) {
+        alert('Server name must be 1-10 characters, only letters, numbers, and spaces, must contain at least one letter, cannot start with a space or be only spaces.');
         return;
     }
+// Restrict input fields to allowed characters in real time
+function restrictNameInput(inputId) {
+    const input = document.getElementById(inputId);
+    input.addEventListener('input', function() {
+        let val = input.value;
+        // Remove disallowed characters (anything except letters, numbers, spaces)
+        val = val.replace(/[^a-zA-Z0-9 ]/g, '');
+        // Prevent starting with space
+        if (val.length > 0 && val[0] === ' ') val = val.trimStart();
+        // Limit to 10 chars
+        if (val.length > 10) val = val.slice(0, 10);
+        input.value = val;
+    });
+}
+restrictNameInput('playerName');
+restrictNameInput('serverName');
     // Password: empty or at least 2 non-space characters
     if (serverPassword && (!serverPassword.trim() || serverPassword.length < 2)) {
         alert('Password must be at least 2 characters and not just spaces.');
