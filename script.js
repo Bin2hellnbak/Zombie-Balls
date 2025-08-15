@@ -20,7 +20,39 @@ function renderServers(servers) {
     servers.forEach((server, idx) => {
         const div = document.createElement('div');
         div.className = 'server-item';
-        div.innerHTML = `<strong>${server.name}</strong> <span>(${server.host})</span><br>Password: <code>${server.password}</code>`;
+        let pwText = server.password ? 'Password required' : 'No password';
+        div.innerHTML = `<strong>${server.name}</strong> <span>(${server.host})</span><br>${pwText}`;
+        // Add join button
+        const joinBtn = document.createElement('button');
+        joinBtn.textContent = 'Join';
+        joinBtn.onclick = async function() {
+            let pw = '';
+            if (server.password) {
+                pw = prompt('Enter server password:');
+                if (pw === null) return;
+            }
+            const playerName = document.getElementById('playerName').value.trim();
+            if (!playerName) {
+                alert('Please enter your player name.');
+                return;
+            }
+            try {
+                const res = await fetch('/servers/join', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: server.name, player: playerName, password: pw })
+                });
+                const result = await res.json();
+                if (result.error) {
+                    alert(result.error);
+                } else {
+                    window.location.href = 'host.html?server=' + encodeURIComponent(server.name) + '&host=' + encodeURIComponent(server.host) + '&player=' + encodeURIComponent(playerName);
+                }
+            } catch {
+                alert('Failed to join server.');
+            }
+        };
+        div.appendChild(joinBtn);
         serversList.appendChild(div);
     });
 }
@@ -45,7 +77,8 @@ document.getElementById('hostBtn').addEventListener('click', async function() {
         });
         document.getElementById('serverName').value = '';
         document.getElementById('serverPassword').value = '';
-        fetchServers();
+        // Host is auto-joined, redirect to host.html
+        window.location.href = 'host.html?server=' + encodeURIComponent(serverName) + '&host=' + encodeURIComponent(playerName) + '&player=' + encodeURIComponent(playerName);
     } catch {
         alert('Failed to host server.');
     }
