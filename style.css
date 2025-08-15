@@ -1,37 +1,76 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
     background: #222;
     color: #eee;
-    margin: 0;
-    padding: 2em;
+    height: 100%;
+}
+.center-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    height: 100vh;
+    box-sizing: border-box;
+    padding-top: 0;
 }
 h1 {
     color: #8fbc8f;
     margin-bottom: 1em;
+    text-align: center;
 }
 .player-section, .host-section, .server-browser {
-    margin-bottom: 2em;
+    margin-bottom: 1.2em;
     background: #2c2c2c;
     padding: 1em;
     border-radius: 8px;
     box-shadow: 0 2px 8px #0003;
+    width: 350px;
+    max-width: 90vw;
+}
+.section-title {
+    font-size: 1.3rem;
+    color: #8fbc8f;
+    text-align: center;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-weight: 600;
+    margin-bottom: 1em;
+    letter-spacing: 0.05em;
 }
 label {
+    text-align: center;
     display: block;
     margin-top: 1em;
     margin-bottom: 0.5em;
     color: #8fbc8f;
+    font-size: 1.1rem;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-weight: 500;
 }
-input[type="text"] {
-    width: 100%;
-    padding: 0.5em;
+input[type="text"], input[type="password"] {
+    width: calc(100% - 2px);
+    padding: 0.5em 1em;
     margin-bottom: 1em;
     border: 1px solid #444;
     border-radius: 4px;
     background: #222;
     color: #eee;
+    text-align: center;
+    box-sizing: border-box;
+}
+input[type="text"]::placeholder, input[type="password"]::placeholder {
+    text-align: center;
+    color: #aaa;
+    opacity: 1;
 }
 button {
+    font-family: 'Segoe UI', 'Arial', sans-serif;
     padding: 0.5em 1em;
     background: #8fbc8f;
     color: #222;
@@ -45,4 +84,24 @@ button:hover {
 }
 #serversList {
     margin-top: 1em;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+}
+#serversList p {
+    text-align: center;
+}
+.main-title {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #8fbc8f;
+    text-shadow: 0 2px 12px #000a, 0 0px 2px #8fbc8f99;
+    margin-top: 20vh;
+    margin-bottom: 5vh;
+    text-align: center;
+    letter-spacing: 0.1em;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+}
+.host-btn-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
 }

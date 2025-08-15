@@ -7,26 +7,28 @@
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <h1>Zombie Balls Server Browser</h1>
-    <div class="player-section">
-        <label for="playerName">Enter your player name:</label>
-        <input type="text" id="playerName" placeholder="Player name">
-    </div>
-    <hr>
-    <div class="server-browser">
-        <h2>Available Servers</h2>
-        <div id="serversList">
-            <p>No servers found. Try hosting one below!</p>
+    <h1 class="main-title">Zombie Balls</h1>
+    <div class="center-container">
+        <div class="player-section">
+            <div class="section-title">Enter your player name</div>
+            <input type="text" id="playerName" placeholder="Player name" class="center-input">
         </div>
-    </div>
-    <hr>
-    <div class="host-section">
-        <h2>Host Your Own Server</h2>
-        <label for="serverName">Server Name:</label>
-        <input type="text" id="serverName" placeholder="My Zombie Server">
-        <label for="serverDesc">Description:</label>
-        <input type="text" id="serverDesc" placeholder="Short description">
-        <button id="hostBtn">Host Server</button>
+        <div class="server-browser">
+            <div class="section-title">Available Servers</div>
+            <div id="serversList">
+                <p>No servers found. Try hosting one below!</p>
+            </div>
+        </div>
+        <div class="host-section">
+            <div class="section-title">Host Your Own Server</div>
+            <label for="serverName">Server Name:</label>
+            <input type="text" id="serverName" placeholder="My Zombie Server" class="center-input">
+            <label for="serverPassword">Password:</label>
+            <input type="password" id="serverPassword" placeholder="Password" class="center-input">
+            <div class="host-btn-container">
+                <button id="hostBtn">Host Server</button>
+            </div>
+        </div>
     </div>
     <script src="./script.js"></script>
 </body>
