@@ -30,6 +30,7 @@ app.get('/servers', (req, res) => {
 });
 
 
+
 // Add a new server
 app.post('/servers', (req, res) => {
     const { name, password, host } = req.body;
@@ -37,10 +38,11 @@ app.post('/servers', (req, res) => {
         return res.status(400).json({ error: 'Missing name or host' });
     }
     // Each server has a name, password, host, and players array
-    servers.push({ name, password, host, players: [host] });
+    servers.push({ name, password, host, players: [{ name: host, ping: null }] });
     saveServers();
     res.json({ success: true });
 });
+
 
 // Join a server
 app.post('/servers/join', (req, res) => {
@@ -50,10 +52,11 @@ app.post('/servers/join', (req, res) => {
     if (server.password && server.password !== password) {
         return res.status(403).json({ error: 'Incorrect password' });
     }
-    if (!server.players.includes(player)) server.players.push(player);
+    if (!server.players.some(p => p.name === player)) server.players.push({ name: player, ping: null });
     saveServers();
     res.json({ success: true });
 });
+
 
 // List players in a server
 app.get('/servers/:name/players', (req, res) => {
@@ -61,6 +64,20 @@ app.get('/servers/:name/players', (req, res) => {
     if (!server) return res.status(404).json({ error: 'Server not found' });
     res.json(server.players);
 });
+
+// Update player ping
+app.post('/servers/:name/ping', (req, res) => {
+    const server = servers.find(s => s.name === req.params.name);
+    if (!server) return res.status(404).json({ error: 'Server not found' });
+    const { player, ping } = req.body;
+    const p = server.players.find(pl => pl.name === player);
+    if (p) {
+        p.ping = ping;
+        saveServers();
+    }
+    res.json({ success: true });
+});
+
 
 
 // Kick a player from a server (only host can kick)
@@ -70,10 +87,11 @@ app.post('/servers/:name/kick', (req, res) => {
     const { player, requester } = req.body;
     if (requester !== server.host) return res.status(403).json({ error: 'Only host can kick players' });
     if (player === server.host) return res.status(400).json({ error: 'Cannot kick host' });
-    server.players = server.players.filter(p => p !== player);
+    server.players = server.players.filter(p => p.name !== player);
     saveServers();
     res.json({ success: true });
 });
+
 
 // Leave server (if host leaves, delete server)
 app.post('/servers/:name/leave', (req, res) => {
@@ -86,7 +104,7 @@ app.post('/servers/:name/leave', (req, res) => {
         saveServers();
         return res.json({ deleted: true });
     }
-    server.players = server.players.filter(p => p !== player);
+    server.players = server.players.filter(p => p.name !== player);
     saveServers();
     res.json({ left: true });
 });
