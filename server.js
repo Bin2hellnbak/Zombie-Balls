@@ -62,15 +62,33 @@ app.get('/servers/:name/players', (req, res) => {
     res.json(server.players);
 });
 
-// Kick a player from a server
+
+// Kick a player from a server (only host can kick)
 app.post('/servers/:name/kick', (req, res) => {
     const server = servers.find(s => s.name === req.params.name);
     if (!server) return res.status(404).json({ error: 'Server not found' });
-    const { player } = req.body;
+    const { player, requester } = req.body;
+    if (requester !== server.host) return res.status(403).json({ error: 'Only host can kick players' });
     if (player === server.host) return res.status(400).json({ error: 'Cannot kick host' });
     server.players = server.players.filter(p => p !== player);
     saveServers();
     res.json({ success: true });
+});
+
+// Leave server (if host leaves, delete server)
+app.post('/servers/:name/leave', (req, res) => {
+    const serverIdx = servers.findIndex(s => s.name === req.params.name);
+    if (serverIdx === -1) return res.status(404).json({ error: 'Server not found' });
+    const server = servers[serverIdx];
+    const { player } = req.body;
+    if (player === server.host) {
+        servers.splice(serverIdx, 1);
+        saveServers();
+        return res.json({ deleted: true });
+    }
+    server.players = server.players.filter(p => p !== player);
+    saveServers();
+    res.json({ left: true });
 });
 
 app.listen(PORT, () => {

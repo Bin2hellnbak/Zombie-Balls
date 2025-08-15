@@ -1,4 +1,3 @@
-
 // Fetch and render servers from backend
 async function fetchServers() {
     try {
@@ -21,10 +20,16 @@ function renderServers(servers) {
         const div = document.createElement('div');
         div.className = 'server-item';
         let pwText = server.password ? 'Password required' : 'No password';
-        div.innerHTML = `<strong>${server.name}</strong> <span>(${server.host})</span><br>${pwText}`;
-        // Add join button
+        // Create server info and join button container
+        const infoDiv = document.createElement('span');
+        infoDiv.innerHTML = `<strong>${server.name}</strong> <span>(${server.host})</span> | ${pwText}`;
+        infoDiv.style.display = 'inline-block';
+        infoDiv.style.verticalAlign = 'middle';
         const joinBtn = document.createElement('button');
         joinBtn.textContent = 'Join';
+        joinBtn.className = 'join-btn';
+        joinBtn.style.marginLeft = 'auto';
+        joinBtn.style.float = 'right';
         joinBtn.onclick = async function() {
             let pw = '';
             if (server.password) {
@@ -52,7 +57,11 @@ function renderServers(servers) {
                 alert('Failed to join server.');
             }
         };
+        div.appendChild(infoDiv);
         div.appendChild(joinBtn);
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.justifyContent = 'space-between';
         serversList.appendChild(div);
     });
 }

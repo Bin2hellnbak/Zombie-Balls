@@ -31,10 +31,10 @@ function renderPlayers(players) {
             const kickBtn = document.createElement('button');
             kickBtn.textContent = 'Kick';
             kickBtn.onclick = async function() {
-                await fetch(`/servers/${encodeURIComponent(getQueryParam('server'))}/kick`, {
+                await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/kick`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ player: p })
+                    body: JSON.stringify({ player: p, requester: host })
                 });
                 fetchPlayers();
             };
@@ -42,6 +42,26 @@ function renderPlayers(players) {
         }
         playersList.appendChild(div);
     });
+}
+
+// Leave server (host deletes server)
+async function leaveServer() {
+    const serverName = await getQueryParam('server');
+    const player = await getQueryParam('player');
+    if (!serverName || !player) return;
+    await fetch(`/servers/${encodeURIComponent(serverName)}/leave`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player })
+    });
+    window.location.href = 'index.html';
+}
+
+// Replace Back to Main button with Leave Server
+const backBtn = document.querySelector('button');
+if (backBtn) {
+    backBtn.textContent = 'Leave Server';
+    backBtn.onclick = leaveServer;
 }
 
 fetchPlayers();
