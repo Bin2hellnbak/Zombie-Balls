@@ -20,6 +20,8 @@ async function fetchPlayers() {
 
 let kicked = false;
 let lastPing = null;
+let gameStarting = false;
+let gameCountdown = 0;
 
 async function renderPlayers(players) {
     const playersList = document.getElementById('playersList');
@@ -125,28 +127,71 @@ async function renderPlayers(players) {
     if (startBtn) {
         if (player === host && allReady) {
             startBtn.style.display = '';
+            startBtn.textContent = gameStarting ? `Starting in ${gameCountdown}... (Abort)` : 'Start Game';
+            startBtn.disabled = false;
             startBtn.onclick = async function() {
-                startBtn.disabled = true;
-                let count = 5;
-                startBtn.textContent = 'Starting in ' + count + '...';
-                const interval = setInterval(() => {
-                    count--;
-                    startBtn.textContent = 'Starting in ' + count + '...';
-                    if (count === 0) {
-                        clearInterval(interval);
-                        startBtn.textContent = 'Start Game';
-                        startBtn.disabled = false;
-                    }
-                }, 1000);
+                if (!gameStarting) {
+                    gameStarting = true;
+                    gameCountdown = 5;
+                    await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/start`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ countdown: gameCountdown })
+                    });
+                    startBtn.textContent = `Starting in ${gameCountdown}... (Abort)`;
+                } else {
+                    // Abort
+                    gameStarting = false;
+                    await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/start`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ countdown: 0 })
+                    });
+                    startBtn.textContent = 'Start Game';
+                }
             };
         } else {
             startBtn.style.display = 'none';
         }
-    } else {
-        // Hide start button for non-hosts
-        if (startBtn) startBtn.style.display = 'none';
+    }
+    // Show countdown for all players
+    const actionsRow = document.querySelector('.server-actions-row');
+    if (actionsRow) {
+        let countdownDiv = document.getElementById('gameCountdownDiv');
+        if (!countdownDiv) {
+            countdownDiv = document.createElement('div');
+            countdownDiv.id = 'gameCountdownDiv';
+            countdownDiv.style.marginLeft = '2em';
+            countdownDiv.style.fontWeight = 'bold';
+            countdownDiv.style.fontSize = '1.2em';
+            actionsRow.appendChild(countdownDiv);
+        }
+        if (gameStarting && gameCountdown > 0) {
+            countdownDiv.textContent = `Game starting in ${gameCountdown}...`;
+        } else {
+            countdownDiv.textContent = '';
+        }
     }
 }
+
+// Poll for game start countdown
+async function pollGameStart() {
+    const serverName = await getQueryParam('server');
+    if (!serverName) return;
+    try {
+        const res = await fetch(`/servers/${encodeURIComponent(serverName)}/start`);
+        const data = await res.json();
+        if (data.countdown && data.countdown > 0) {
+            gameStarting = true;
+            gameCountdown = data.countdown;
+        } else {
+            gameStarting = false;
+            gameCountdown = 0;
+        }
+        renderPlayers(await (await fetch(`/servers/${encodeURIComponent(serverName)}/players`)).json());
+    } catch {}
+}
+setInterval(pollGameStart, 1000);
 
 // Periodically send ping to server
 async function sendPing() {

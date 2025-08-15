@@ -227,6 +227,9 @@ button:hover {
     gap: 1.5em;
     margin-top: 1.5em;
 }
+#leaveServerBtn, #startGameBtn {
+    align-self: center;
+}
 #leaveServerBtn {
     padding: 0.7em 2em;
     font-size: 1.2em;

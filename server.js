@@ -1,3 +1,17 @@
+// Game start countdown state
+let gameCountdowns = {};
+
+// Set game start countdown
+app.post('/servers/:name/start', (req, res) => {
+    const { countdown } = req.body;
+    gameCountdowns[req.params.name] = countdown;
+    res.json({ success: true });
+});
+
+// Get game start countdown
+app.get('/servers/:name/start', (req, res) => {
+    res.json({ countdown: gameCountdowns[req.params.name] || 0 });
+});
 // Simple Express backend for Zombie Balls server browser
 const express = require('express');
 const fs = require('fs');
