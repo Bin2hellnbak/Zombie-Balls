@@ -1,17 +1,3 @@
-// Game start countdown state
-let gameCountdowns = {};
-
-// Set game start countdown
-app.post('/servers/:name/start', (req, res) => {
-    const { countdown } = req.body;
-    gameCountdowns[req.params.name] = countdown;
-    res.json({ success: true });
-});
-
-// Get game start countdown
-app.get('/servers/:name/start', (req, res) => {
-    res.json({ countdown: gameCountdowns[req.params.name] || 0 });
-});
 // Simple Express backend for Zombie Balls server browser
 const express = require('express');
 const fs = require('fs');
@@ -19,6 +5,9 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'servers.json');
+
+// Game start countdown state
+let gameCountdowns = {};
 
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -38,12 +27,22 @@ function saveServers() {
     fs.writeFileSync(DATA_FILE, JSON.stringify(servers, null, 2));
 }
 
+// Set game start countdown
+app.post('/servers/:name/start', (req, res) => {
+    const { countdown } = req.body;
+    gameCountdowns[req.params.name] = countdown;
+    res.json({ success: true });
+});
+
+// Get game start countdown
+app.get('/servers/:name/start', (req, res) => {
+    res.json({ countdown: gameCountdowns[req.params.name] || 0 });
+});
+
 // Get all servers
 app.get('/servers', (req, res) => {
     res.json(servers);
 });
-
-
 
 // Add a new server
 app.post('/servers', (req, res) => {
@@ -57,7 +56,6 @@ app.post('/servers', (req, res) => {
     res.json({ success: true });
 });
 
-
 // Join a server
 app.post('/servers/join', (req, res) => {
     const { name, player, password } = req.body;
@@ -67,6 +65,10 @@ app.post('/servers/join', (req, res) => {
         return res.status(403).json({ error: 'Incorrect password' });
     }
     if (!server.players.some(p => p.name === player)) server.players.push({ name: player, ping: null, ready: false });
+    saveServers();
+    res.json({ success: true });
+});
+
 // Set player ready status
 app.post('/servers/:name/ready', (req, res) => {
     const server = servers.find(s => s.name === req.params.name);
@@ -87,10 +89,6 @@ app.get('/servers/:name/allready', (req, res) => {
     const allReady = server.players.length > 0 && server.players.every(pl => pl.ready);
     res.json({ allReady });
 });
-    saveServers();
-    res.json({ success: true });
-});
-
 
 // List players in a server
 app.get('/servers/:name/players', (req, res) => {
@@ -112,8 +110,6 @@ app.post('/servers/:name/ping', (req, res) => {
     res.json({ success: true });
 });
 
-
-
 // Kick a player from a server (only host can kick)
 app.post('/servers/:name/kick', (req, res) => {
     const server = servers.find(s => s.name === req.params.name);
@@ -125,7 +121,6 @@ app.post('/servers/:name/kick', (req, res) => {
     saveServers();
     res.json({ success: true });
 });
-
 
 // Leave server (if host leaves, delete server)
 app.post('/servers/:name/leave', (req, res) => {
