@@ -7,9 +7,27 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Welcome to Zombie Balls!</h1>
-    <p>This is your base website. Edit this page to get started.</p>
-    <button id="helloBtn">Say Hello</button>
+    <h1>Zombie Balls Server Browser</h1>
+    <div class="player-section">
+        <label for="playerName">Enter your player name:</label>
+        <input type="text" id="playerName" placeholder="Player name">
+    </div>
+    <hr>
+    <div class="server-browser">
+        <h2>Available Servers</h2>
+        <div id="serversList">
+            <p>No servers found. Try hosting one below!</p>
+        </div>
+    </div>
+    <hr>
+    <div class="host-section">
+        <h2>Host Your Own Server</h2>
+        <label for="serverName">Server Name:</label>
+        <input type="text" id="serverName" placeholder="My Zombie Server">
+        <label for="serverDesc">Description:</label>
+        <input type="text" id="serverDesc" placeholder="Short description">
+        <button id="hostBtn">Host Server</button>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
