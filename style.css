@@ -240,6 +240,13 @@ button:hover {
     align-self: center;
     margin-top: 0;
 }
+#gameCountdownDiv {
+    margin-left: 1.5em;
+    font-weight: bold;
+    font-size: 1.2em;
+    align-self: center;
+    white-space: nowrap;
+}
 #leaveServerBtn {
     padding: 0.7em 2em;
     font-size: 1.2em;

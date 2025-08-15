@@ -97,7 +97,9 @@ app.get('/servers/:name/players', (req, res) => {
     res.json(server.players);
 });
 
-// Update player ping
+// Track last heartbeat for each host
+let hostHeartbeats = {};
+// Update player ping and heartbeat for host
 app.post('/servers/:name/ping', (req, res) => {
     const server = servers.find(s => s.name === req.params.name);
     if (!server) return res.status(404).json({ error: 'Server not found' });
@@ -105,6 +107,10 @@ app.post('/servers/:name/ping', (req, res) => {
     const p = server.players.find(pl => pl.name === player);
     if (p) {
         p.ping = ping;
+        // If this is the host, update heartbeat
+        if (player === server.host) {
+            hostHeartbeats[server.name] = Date.now();
+        }
         saveServers();
     }
     res.json({ success: true });
@@ -137,6 +143,24 @@ app.post('/servers/:name/leave', (req, res) => {
     saveServers();
     res.json({ left: true });
 });
+
+// Periodically check for dead hosts and remove their servers
+setInterval(() => {
+    const now = Date.now();
+    for (const server of [...servers]) {
+        const last = hostHeartbeats[server.name];
+        if (typeof last === 'number' && now - last > 10000) {
+            // Host is dead, remove server
+            const idx = servers.findIndex(s => s.name === server.name);
+            if (idx !== -1) {
+                servers.splice(idx, 1);
+                delete hostHeartbeats[server.name];
+                saveServers();
+                console.log(`Server '${server.name}' removed due to host inactivity.`);
+            }
+        }
+    }
+}, 2000);
 
 app.listen(PORT, () => {
     console.log(`Zombie Balls backend running on http://localhost:${PORT}`);

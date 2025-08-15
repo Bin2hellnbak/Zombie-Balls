@@ -21,10 +21,17 @@ function renderServers(servers) {
         div.className = 'server-item';
         let pwText = server.password ? 'Password required' : 'No password';
         // Create server info and join button container
-        const infoDiv = document.createElement('span');
-        infoDiv.innerHTML = `<strong>${server.name}</strong> <span>(${server.host})</span> | ${pwText}`;
-        infoDiv.style.display = 'inline-block';
-        infoDiv.style.verticalAlign = 'middle';
+        const infoDiv = document.createElement('div');
+        infoDiv.style.display = 'flex';
+        infoDiv.style.flexDirection = 'column';
+        infoDiv.style.justifyContent = 'center';
+        infoDiv.style.alignItems = 'flex-start';
+        infoDiv.innerHTML = `
+            <div style="font-weight:bold;font-size:1.1em;">${server.name}</div>
+            <div style="font-size:0.95em;">Host: ${server.host}</div>
+            <div style="font-size:0.9em;color:#888;">Players: ${server.players ? server.players.length : 1}</div>
+            <div style="font-size:0.85em;color:#b44;">${pwText}</div>
+        `;
         const joinBtn = document.createElement('button');
         joinBtn.textContent = 'Join';
         joinBtn.className = 'join-btn';
@@ -35,10 +42,16 @@ function renderServers(servers) {
             if (server.password) {
                 pw = prompt('Enter server password:');
                 if (pw === null) return;
+                // Password: at least 2 non-space characters
+                if (!pw.trim() || pw.length < 2) {
+                    alert('Password must be at least 2 characters and not just spaces.');
+                    return;
+                }
             }
             const playerName = document.getElementById('playerName').value.trim();
-            if (!playerName) {
-                alert('Please enter your player name.');
+            // Player name: 1-10 letters/numbers, at least 1 letter
+            if (!/^(?=.*[a-zA-Z])[a-zA-Z0-9]{1,10}$/.test(playerName)) {
+                alert('Player name must be 1-10 characters, only letters and numbers, and contain at least one letter.');
                 return;
             }
             try {
@@ -69,13 +82,20 @@ function renderServers(servers) {
 document.getElementById('hostBtn').addEventListener('click', async function() {
     const playerName = document.getElementById('playerName').value.trim();
     const serverName = document.getElementById('serverName').value.trim();
-    const serverPassword = document.getElementById('serverPassword').value.trim();
-    if (!playerName) {
-        alert('Please enter your player name.');
+    const serverPassword = document.getElementById('serverPassword').value;
+    // Player name: 1-10 letters/numbers, at least 1 letter
+    if (!/^(?=.*[a-zA-Z])[a-zA-Z0-9]{1,10}$/.test(playerName)) {
+        alert('Player name must be 1-10 characters, only letters and numbers, and contain at least one letter.');
         return;
     }
-    if (!serverName) {
-        alert('Please enter a server name.');
+    // Server name: 1-10 letters/numbers, at least 1 letter
+    if (!/^(?=.*[a-zA-Z])[a-zA-Z0-9]{1,10}$/.test(serverName)) {
+        alert('Server name must be 1-10 characters, only letters and numbers, and contain at least one letter.');
+        return;
+    }
+    // Password: empty or at least 2 non-space characters
+    if (serverPassword && (!serverPassword.trim() || serverPassword.length < 2)) {
+        alert('Password must be at least 2 characters and not just spaces.');
         return;
     }
     try {

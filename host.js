@@ -21,6 +21,7 @@ async function fetchPlayers() {
 let kicked = false;
 let lastPing = null;
 let gameStarting = false;
+let gameCountdown = 0;
 
 async function renderPlayers(players) {
     const playersList = document.getElementById('playersList');
@@ -132,10 +133,11 @@ async function renderPlayers(players) {
             startBtn.onclick = async function() {
                 if (!gameStarting) {
                     gameStarting = true;
+                    gameCountdown = 5;
                     await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/start`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ countdown: 1 }) // just a flag, not a real countdown
+                        body: JSON.stringify({ countdown: gameCountdown })
                     });
                     startBtn.textContent = 'Abort';
                     startBtn.classList.add('abort');
@@ -155,11 +157,23 @@ async function renderPlayers(players) {
             startBtn.style.display = 'none';
         }
     }
-    // Remove countdown display for all players
+    // Show countdown display for all players
     const actionsRow = document.querySelector('.server-actions-row');
     if (actionsRow) {
         let countdownDiv = document.getElementById('gameCountdownDiv');
-        if (countdownDiv) countdownDiv.textContent = '';
+        if (!countdownDiv) {
+            countdownDiv = document.createElement('div');
+            countdownDiv.id = 'gameCountdownDiv';
+            countdownDiv.style.marginLeft = '2em';
+            countdownDiv.style.fontWeight = 'bold';
+            countdownDiv.style.fontSize = '1.2em';
+            actionsRow.appendChild(countdownDiv);
+        }
+        if (gameStarting && gameCountdown > 0) {
+            countdownDiv.textContent = `Game starting in ${gameCountdown}...`;
+        } else {
+            countdownDiv.textContent = '';
+        }
     }
 }
 
@@ -170,7 +184,13 @@ async function pollGameStart() {
     try {
         const res = await fetch(`/servers/${encodeURIComponent(serverName)}/start`);
         const data = await res.json();
-        gameStarting = !!data.countdown;
+        if (data.countdown && data.countdown > 0) {
+            gameStarting = true;
+            gameCountdown = data.countdown;
+        } else {
+            gameStarting = false;
+            gameCountdown = 0;
+        }
         renderPlayers(await (await fetch(`/servers/${encodeURIComponent(serverName)}/players`)).json());
     } catch {}
 }
