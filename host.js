@@ -209,5 +209,11 @@ if (backBtn) {
     backBtn.onclick = leaveServer;
 }
 
-fetchPlayers();
+// Send initial ping and fetch players immediately on page load
+async function initialSetup() {
+    await sendPing();
+    await fetchPlayers();
+}
+initialSetup();
+setInterval(sendPing, 3000);
 setInterval(fetchPlayers, 2000);
