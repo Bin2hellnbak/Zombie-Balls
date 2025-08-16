@@ -34,6 +34,15 @@ app.post('/servers/:name/start', (req, res) => {
     res.json({ success: true });
 });
 
+// Countdown tick logic
+setInterval(() => {
+    for (const name in gameCountdowns) {
+        if (gameCountdowns[name] > 0) {
+            gameCountdowns[name]--;
+        }
+    }
+}, 1000);
+
 // Get game start countdown
 app.get('/servers/:name/start', (req, res) => {
     res.json({ countdown: gameCountdowns[req.params.name] || 0 });

@@ -2,7 +2,14 @@
 async function fetchServers() {
     try {
         const res = await fetch('/servers');
-        const servers = await res.json();
+        let servers = await res.json();
+        // Fetch countdown for each server
+        servers = await Promise.all(servers.map(async s => {
+            const res = await fetch(`/servers/${encodeURIComponent(s.name)}/start`);
+            const data = await res.json();
+            s.countdown = data.countdown;
+            return s;
+        }));
         renderServers(servers);
     } catch {
         renderServers([]);
@@ -33,46 +40,57 @@ function renderServers(servers) {
             <div style="font-size:0.9em;color:#fff;">Players: ${server.players ? server.players.length : 1}</div>
             <div style="font-size:0.85em;color:${pwColor};">${pwText}</div>
         `;
-        const joinBtn = document.createElement('button');
-        joinBtn.textContent = 'Join';
-        joinBtn.className = 'join-btn';
-        joinBtn.style.marginLeft = 'auto';
-        joinBtn.style.float = 'right';
-        joinBtn.onclick = async function() {
-            let pw = '';
-            if (server.password) {
-                pw = prompt('Enter server password:');
-                if (pw === null) return;
-                // Password: at least 2 non-space characters
-                if (!pw.trim() || pw.length < 2) {
-                    alert('Password must be at least 2 characters and not just spaces.');
+        // If game is in progress (countdown > 0), disable join and show text
+        if (server.countdown && server.countdown > 0) {
+            const inProgress = document.createElement('span');
+            inProgress.textContent = 'Game in progress';
+            inProgress.style.color = '#4caf50';
+            inProgress.style.fontWeight = 'bold';
+            inProgress.style.marginLeft = 'auto';
+            div.appendChild(infoDiv);
+            div.appendChild(inProgress);
+        } else {
+            const joinBtn = document.createElement('button');
+            joinBtn.textContent = 'Join';
+            joinBtn.className = 'join-btn';
+            joinBtn.style.marginLeft = 'auto';
+            joinBtn.style.float = 'right';
+            joinBtn.onclick = async function() {
+                let pw = '';
+                if (server.password) {
+                    pw = prompt('Enter server password:');
+                    if (pw === null) return;
+                    // Password: at least 2 non-space characters
+                    if (!pw.trim() || pw.length < 2) {
+                        alert('Password must be at least 2 characters and not just spaces.');
+                        return;
+                    }
+                }
+                const playerName = document.getElementById('playerName').value.trim();
+                // Player name: 1-10 chars, letters/numbers/spaces, at least 1 letter, not only spaces, not starting with space
+                if (!/^(?=.*[a-zA-Z])[a-zA-Z0-9 ]{1,10}$/.test(playerName) || /^\s/.test(playerName) || playerName.trim().length === 0) {
+                    alert('Player name must be 1-10 characters, only letters, numbers, and spaces, must contain at least one letter, cannot start with a space or be only spaces.');
                     return;
                 }
-            }
-            const playerName = document.getElementById('playerName').value.trim();
-            // Player name: 1-10 chars, letters/numbers/spaces, at least 1 letter, not only spaces, not starting with space
-            if (!/^(?=.*[a-zA-Z])[a-zA-Z0-9 ]{1,10}$/.test(playerName) || /^\s/.test(playerName) || playerName.trim().length === 0) {
-                alert('Player name must be 1-10 characters, only letters, numbers, and spaces, must contain at least one letter, cannot start with a space or be only spaces.');
-                return;
-            }
-            try {
-                const res = await fetch('/servers/join', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: server.name, player: playerName, password: pw })
-                });
-                const result = await res.json();
-                if (result.error) {
-                    alert(result.error);
-                } else {
-                    window.location.href = 'host.html?server=' + encodeURIComponent(server.name) + '&host=' + encodeURIComponent(server.host) + '&player=' + encodeURIComponent(playerName);
+                try {
+                    const res = await fetch('/servers/join', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: server.name, player: playerName, password: pw })
+                    });
+                    const result = await res.json();
+                    if (result.error) {
+                        alert(result.error);
+                    } else {
+                        window.location.href = 'host.html?server=' + encodeURIComponent(server.name) + '&host=' + encodeURIComponent(server.host) + '&player=' + encodeURIComponent(playerName);
+                    }
+                } catch {
+                    alert('Failed to join server.');
                 }
-            } catch {
-                alert('Failed to join server.');
-            }
-        };
-        div.appendChild(infoDiv);
-        div.appendChild(joinBtn);
+            };
+            div.appendChild(infoDiv);
+            div.appendChild(joinBtn);
+        }
         div.style.display = 'flex';
         div.style.alignItems = 'center';
         div.style.justifyContent = 'space-between';
