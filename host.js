@@ -61,7 +61,7 @@ async function renderPlayers(players) {
             alert('You were kicked from the server by the host.');
         }
         window.location.href = 'index.html';
-        return;
+        // Do not return here; allow table to render for others
     }
     let allReady = players.length > 0 && players.every(pl => pl.ready);
     players.forEach(pl => {
