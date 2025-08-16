@@ -97,9 +97,9 @@ app.get('/servers/:name/players', (req, res) => {
     res.json(server.players);
 });
 
-// Track last heartbeat for each host
-let hostHeartbeats = {};
-// Update player ping and heartbeat for host
+// Track last heartbeat for each player
+let playerHeartbeats = {};
+// Update player ping and heartbeat
 app.post('/servers/:name/ping', (req, res) => {
     const server = servers.find(s => s.name === req.params.name);
     if (!server) return res.status(404).json({ error: 'Server not found' });
@@ -107,10 +107,9 @@ app.post('/servers/:name/ping', (req, res) => {
     const p = server.players.find(pl => pl.name === player);
     if (p) {
         p.ping = ping;
-        // If this is the host, update heartbeat
-        if (player === server.host) {
-            hostHeartbeats[server.name] = Date.now();
-        }
+        // Update heartbeat for this player
+        if (!playerHeartbeats[server.name]) playerHeartbeats[server.name] = {};
+        playerHeartbeats[server.name][player] = Date.now();
         saveServers();
     }
     res.json({ success: true });
@@ -144,19 +143,33 @@ app.post('/servers/:name/leave', (req, res) => {
     res.json({ left: true });
 });
 
-// Periodically check for dead hosts and remove their servers
+// Periodically check for dead hosts and players
 setInterval(() => {
     const now = Date.now();
     for (const server of [...servers]) {
-        const last = hostHeartbeats[server.name];
-        if (typeof last === 'number' && now - last > 10000) {
-            // Host is dead, remove server
+        // Remove server if host is dead
+        const hostLast = playerHeartbeats[server.name]?.[server.host];
+        if (typeof hostLast === 'number' && now - hostLast > 10000) {
             const idx = servers.findIndex(s => s.name === server.name);
             if (idx !== -1) {
                 servers.splice(idx, 1);
-                delete hostHeartbeats[server.name];
+                delete playerHeartbeats[server.name];
                 saveServers();
                 console.log(`Server '${server.name}' removed due to host inactivity.`);
+            }
+            continue;
+        }
+        // Remove inactive players
+        if (playerHeartbeats[server.name]) {
+            for (const player of [...server.players.map(p => p.name)]) {
+                if (player === server.host) continue;
+                const last = playerHeartbeats[server.name][player];
+                if (typeof last === 'number' && now - last > 10000) {
+                    server.players = server.players.filter(p => p.name !== player);
+                    delete playerHeartbeats[server.name][player];
+                    saveServers();
+                    console.log(`Player '${player}' removed from server '${server.name}' due to inactivity.`);
+                }
             }
         }
     }

@@ -76,11 +76,12 @@ async function renderPlayers(players) {
         const pingTd = document.createElement('td');
         pingTd.textContent = pl.ping !== null ? `${pl.ping} ms` : '';
         tr.appendChild(pingTd);
-        // Ready status cell
-        const readyTd = document.createElement('td');
-        readyTd.textContent = pl.ready ? 'True' : 'False';
-        readyTd.style.color = pl.ready ? '#8fbc8f' : '#e57373';
-        tr.appendChild(readyTd);
+    // Ready status cell
+    const readyTd = document.createElement('td');
+    readyTd.textContent = pl.ready ? 'Ready' : 'Unready';
+    readyTd.style.color = pl.ready ? '#4caf50' : '#ff9800';
+    readyTd.style.fontWeight = 'bold';
+    tr.appendChild(readyTd);
         // Ready button cell
         const readyBtnTd = document.createElement('td');
         readyBtnTd.className = 'ready-btn-td';
@@ -88,7 +89,9 @@ async function renderPlayers(players) {
         if (pl.name === player) {
             const readyBtn = document.createElement('button');
             readyBtn.textContent = pl.ready ? 'Unready' : 'Ready';
-            readyBtn.className = pl.ready ? 'kick-btn ready' : 'kick-btn unready';
+            readyBtn.className = 'ready-btn';
+            readyBtn.style.backgroundColor = pl.ready ? '#ff9800' : '#4caf50';
+            readyBtn.style.color = '#fff';
             readyBtn.onclick = async function() {
                 await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/ready`, {
                     method: 'POST',

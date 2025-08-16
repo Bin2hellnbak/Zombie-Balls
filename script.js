@@ -26,11 +26,12 @@ function renderServers(servers) {
         infoDiv.style.flexDirection = 'column';
         infoDiv.style.justifyContent = 'center';
         infoDiv.style.alignItems = 'flex-start';
+        const pwColor = server.password ? '#ff9800' : '#4caf50';
         infoDiv.innerHTML = `
             <div style="font-weight:bold;font-size:1.1em;">${server.name}</div>
             <div style="font-size:0.95em;">Host: ${server.host}</div>
-            <div style="font-size:0.9em;color:#888;">Players: ${server.players ? server.players.length : 1}</div>
-            <div style="font-size:0.85em;color:#b44;">${pwText}</div>
+            <div style="font-size:0.9em;color:#fff;">Players: ${server.players ? server.players.length : 1}</div>
+            <div style="font-size:0.85em;color:${pwColor};">${pwText}</div>
         `;
         const joinBtn = document.createElement('button');
         joinBtn.textContent = 'Join';
