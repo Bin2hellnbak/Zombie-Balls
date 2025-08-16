@@ -92,7 +92,14 @@ async function renderPlayers(players) {
             readyBtn.className = 'ready-btn';
             readyBtn.style.backgroundColor = pl.ready ? '#ff9800' : '#4caf50';
             readyBtn.style.color = '#fff';
+            // Disable unreadying during countdown
+            if (gameStarting && gameCountdown > 0 && pl.ready) {
+                readyBtn.disabled = true;
+            } else {
+                readyBtn.disabled = false;
+            }
             readyBtn.onclick = async function() {
+                if (gameStarting && gameCountdown > 0 && pl.ready) return;
                 await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/ready`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -107,59 +114,23 @@ async function renderPlayers(players) {
         if (player === host) {
             const controlsTd = document.createElement('td');
             controlsTd.style.textAlign = 'center';
-            if (pl.name === player) {
-                const readyBtn = document.createElement('button');
-                readyBtn.textContent = pl.ready ? 'Unready' : 'Ready';
-                readyBtn.className = 'ready-btn';
-                readyBtn.style.backgroundColor = pl.ready ? '#ff9800' : '#4caf50';
-                readyBtn.style.color = '#fff';
-                // Disable unreadying during countdown
-                if (gameStarting && gameCountdown > 0 && pl.ready) {
-                    readyBtn.disabled = true;
-                } else {
-                    readyBtn.disabled = false;
-                }
-                readyBtn.onclick = async function() {
-                    if (gameStarting && gameCountdown > 0 && pl.ready) return;
-                    await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/ready`, {
+            if (pl.name !== host) {
+                const kickBtn = document.createElement('button');
+                kickBtn.textContent = 'Kick';
+                kickBtn.className = 'kick-btn';
+                kickBtn.onclick = async function() {
+                    await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/kick`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ player, ready: !pl.ready })
+                        body: JSON.stringify({ player: pl.name, requester: host })
                     });
                     fetchPlayers();
                 };
-                readyBtnTd.appendChild(readyBtn);
+                controlsTd.appendChild(kickBtn);
             }
-            startBtn.textContent = gameStarting ? 'Abort' : 'Start Game';
-            startBtn.classList.toggle('abort', gameStarting);
-            startBtn.disabled = false;
-            startBtn.onclick = async function() {
-                if (!gameStarting) {
-                    gameStarting = true;
-                    gameCountdown = 5;
-                    await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/start`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ countdown: gameCountdown })
-                    });
-                    startBtn.textContent = 'Abort';
-                    startBtn.classList.add('abort');
-                } else {
-                    // Abort
-                    gameStarting = false;
-                    await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/start`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ countdown: 0 })
-                    });
-                    startBtn.textContent = 'Start Game';
-                    startBtn.classList.remove('abort');
-                }
-            };
-        } else {
-            startBtn.style.display = 'none';
+            tr.appendChild(controlsTd);
         }
-    }
+        playersList.appendChild(tr);
     // Show countdown display for all players
     const actionsRow = document.querySelector('.server-actions-row');
     if (actionsRow) {
