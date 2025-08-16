@@ -76,12 +76,12 @@ async function renderPlayers(players) {
         const pingTd = document.createElement('td');
         pingTd.textContent = pl.ping !== null ? `${pl.ping} ms` : '';
         tr.appendChild(pingTd);
-    // Ready status cell
-    const readyTd = document.createElement('td');
-    readyTd.textContent = pl.ready ? 'Ready' : 'Unready';
-    readyTd.style.color = pl.ready ? '#4caf50' : '#ff9800';
-    readyTd.style.fontWeight = 'bold';
-    tr.appendChild(readyTd);
+        // Ready status cell
+        const readyTd = document.createElement('td');
+        readyTd.textContent = pl.ready ? 'Ready' : 'Unready';
+        readyTd.style.color = pl.ready ? '#4caf50' : '#ff9800';
+        readyTd.style.fontWeight = 'bold';
+        tr.appendChild(readyTd);
         // Ready button cell
         const readyBtnTd = document.createElement('td');
         readyBtnTd.className = 'ready-btn-td';
@@ -131,6 +131,8 @@ async function renderPlayers(players) {
             tr.appendChild(controlsTd);
         }
         playersList.appendChild(tr);
+    });
+
     // Show countdown display for all players
     const actionsRow = document.querySelector('.server-actions-row');
     if (actionsRow) {
