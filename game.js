@@ -71,6 +71,15 @@ if (!connectAttempted) {
         else if (++tries > 10) { clearInterval(poll); startLocalMode(); }
     }, 300);
 }
+else {
+    // If we created a socket but it doesn't connect shortly, fall back to local mode
+    setTimeout(() => {
+        if (!localMode && socket && !socket.connected) {
+            console.warn('Socket exists but did not connect quickly — falling back to local mode');
+            startLocalMode();
+        }
+    }, 1500);
+}
 
 // Simple status overlay for debugging connection / players
 const statusDiv = document.createElement('div');
