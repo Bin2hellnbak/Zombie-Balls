@@ -1,8 +1,9 @@
 // Basic client-side game logic for Zombie Balls
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-// Connect explicitly to the game server socket (port 4000)
-const socket = io('http://localhost:4000');
+// We'll initialize socket after ensuring the socket.io lib is loaded.
+let socket = null;
+let localMode = false; // fallback when socket can't be used
 
 // Ensure canvas has sensible size (some hosts may serve CSS first)
 if (!canvas.width || !canvas.height) {
@@ -20,7 +21,53 @@ let playerId = null;
 let players = {};
 let camera = { x: 0, y: 0 };
 
-console.log('Game client starting, connecting to', 'http://localhost:4000');
+console.log('Game client starting, attempting to connect to http://localhost:4000');
+
+function startLocalMode() {
+    console.warn('Starting local offline mode (no socket)');
+    localMode = true;
+    const id = 'local';
+    playerId = id;
+    players = {};
+    players[id] = { id, name: getPlayerName() || 'LocalPlayer', x: WORLD_SIZE/2, y: WORLD_SIZE/2 };
+    updateStatus();
+}
+
+function connectSocketOnce() {
+    if (typeof io === 'undefined') return false;
+    try {
+        socket = io('http://localhost:4000');
+    } catch (e) {
+        console.error('Error creating socket:', e);
+        return false;
+    }
+    // Wire socket handlers
+    socket.on('connect', () => { console.log('socket connected', socket.id); updateStatus(); });
+    socket.on('init', data => {
+        playerId = data.id;
+        players = data.players || {};
+        console.log('socket init:', playerId, Object.keys(players).length, 'players');
+        updateStatus();
+    });
+    socket.on('state', data => {
+        players = data.players || {};
+        updateStatus();
+    });
+    socket.on('connect_error', (err) => {
+        console.error('Socket connect_error', err);
+    });
+    return true;
+}
+
+// Try to connect immediately; if socket.io not yet loaded poll for a short time then fallback to local mode
+let connectAttempted = connectSocketOnce();
+if (!connectAttempted) {
+    let tries = 0;
+    const poll = setInterval(() => {
+        if (connectSocketOnce()) { clearInterval(poll); connectAttempted = true; }
+        else if (++tries > 10) { clearInterval(poll); startLocalMode(); }
+    }, 300);
+}
 
 // Simple status overlay for debugging connection / players
 const statusDiv = document.createElement('div');
@@ -35,7 +82,7 @@ statusDiv.style.fontSize = '13px';
 statusDiv.style.zIndex = 9999;
 document.body.appendChild(statusDiv);
 function updateStatus() {
-    statusDiv.textContent = `conn:${socket.connected ? 'yes' : 'no'} id:${playerId || '-'} players:${Object.keys(players || {}).length}`;
+    statusDiv.textContent = `mode:${localMode ? 'local' : (socket && socket.connected ? 'online' : 'disconnected')} id:${playerId || '-'} players:${Object.keys(players || {}).length}`;
 }
 updateStatus();
 
@@ -62,7 +109,9 @@ function updateLocalPlayer() {
     p.x = Math.max(BALL_RADIUS, Math.min(WORLD_SIZE - BALL_RADIUS, p.x + dx));
     p.y = Math.max(BALL_RADIUS, Math.min(WORLD_SIZE - BALL_RADIUS, p.y + dy));
     // Send position to server
-    socket.emit('move', { x: p.x, y: p.y });
+    if (!localMode && socket && socket.connected) {
+        socket.emit('move', { x: p.x, y: p.y });
+    }
     // small debug
     // console.log('Local move', p.x, p.y);
 }
@@ -123,6 +172,7 @@ function gameLoop() {
     updateLocalPlayer();
     updateCamera();
     draw();
+    updateStatus();
     requestAnimationFrame(gameLoop);
 }
 
