@@ -42,7 +42,10 @@ function connectSocketOnce() {
         return false;
     }
     // Wire socket handlers
-    socket.on('connect', () => { console.log('socket connected', socket.id); updateStatus(); });
+    socket.on('connect', () => { console.log('socket connected', socket.id); updateStatus();
+        // announce ourselves to the game server once connected
+        try { socket.emit('join', { name: getPlayerName() }); } catch (e) { console.warn('join emit failed', e); }
+    });
     socket.on('init', data => {
         playerId = data.id;
         players = data.players || {};
@@ -178,41 +181,4 @@ function gameLoop() {
 
 gameLoop();
 
-// Socket.io events
-socket.on('init', data => {
-    playerId = data.id;
-    players = data.players;
-    console.log('socket init:', playerId, Object.keys(players).length, 'players');
-});
-socket.on('state', data => {
-    players = data.players;
-    // console.log('socket state:', Object.keys(players).length, 'players');
-});
-
-// Join game on load
-socket.emit('join', { name: getPlayerName() });
-
-// Socket error handling: show overlay on connection failure
-socket.io && socket.io.on('error', (err) => {
-    console.error('Socket.io engine error', err);
-});
-socket.on('connect_error', (err) => {
-    console.error('Socket connect_error', err);
-    const o = document.createElement('div');
-    o.style.position = 'fixed';
-    o.style.left = '0';
-    o.style.top = '0';
-    o.style.right = '0';
-    o.style.bottom = '0';
-    o.style.background = 'rgba(0,0,0,0.9)';
-    o.style.color = '#fff';
-    o.style.display = 'flex';
-    o.style.alignItems = 'center';
-    o.style.justifyContent = 'center';
-    o.style.fontSize = '18px';
-    o.style.zIndex = 99999;
-    o.innerText = `Socket connection failed: ${err && err.message ? err.message : err}`;
-    document.body.appendChild(o);
-});
-socket.on('connect', () => updateStatus());
-socket.on('disconnect', () => updateStatus());
+// Note: socket handlers are installed in connectSocketOnce() to avoid referencing a null socket.
