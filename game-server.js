@@ -4,7 +4,12 @@ const express = require('express');
 const socketio = require('socket.io');
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server);
+// Allow cross-origin connections from the lobby server (or any origin during development)
+const io = socketio(server, {
+    cors: {
+        origin: '*'
+    }
+});
 
 const WORLD_SIZE = 2000;
 const BALL_RADIUS = 20;
@@ -13,7 +18,9 @@ let players = {};
 
 io.on('connection', socket => {
     let playerId = socket.id;
+    console.log(`Socket connected: ${playerId}`);
     socket.on('join', ({ name }) => {
+        console.log(`Player join requested: ${name} (socket ${playerId})`);
         // Spawn player in center
         players[playerId] = {
             id: playerId,
