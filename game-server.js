@@ -48,6 +48,14 @@ io.on('connection', socket => {
 app.use(express.static(__dirname));
 
 const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => {
-    console.log(`Zombie Balls game server running on http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', (err) => {
+    if (err) {
+        console.error('Failed to start game server:', err);
+        process.exit(1);
+    }
+    console.log(`Zombie Balls game server running on http://0.0.0.0:${PORT}`);
+});
+
+server.on('error', (err) => {
+    console.error('Game server error:', err);
 });
