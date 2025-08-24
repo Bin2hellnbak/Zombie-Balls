@@ -1,7 +1,8 @@
 // Basic client-side game logic for Zombie Balls
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const socket = io();
+// Connect explicitly to the game server socket (port 4000)
+const socket = io('http://localhost:4000');
 
 const WORLD_SIZE = 2000;
 const VIEWPORT_W = canvas.width;

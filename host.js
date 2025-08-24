@@ -151,6 +151,42 @@ async function renderPlayers(players) {
             countdownDiv.textContent = '';
         }
     }
+
+    // Start/Abort game button for host when everyone is ready
+    const startBtn = document.getElementById('startGameBtn');
+    if (startBtn) {
+        if (player === host && allReady) {
+            startBtn.style.display = '';
+            startBtn.textContent = gameStarting ? 'Abort' : 'Start Game';
+            startBtn.classList.toggle('abort', gameStarting);
+            startBtn.disabled = false;
+            startBtn.onclick = async function() {
+                if (!gameStarting) {
+                    gameStarting = true;
+                    gameCountdown = 5;
+                    await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/start`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ countdown: gameCountdown })
+                    });
+                    startBtn.textContent = 'Abort';
+                    startBtn.classList.add('abort');
+                } else {
+                    // Abort
+                    gameStarting = false;
+                    await fetch(`/servers/${encodeURIComponent(await getQueryParam('server'))}/start`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ countdown: 0 })
+                    });
+                    startBtn.textContent = 'Start Game';
+                    startBtn.classList.remove('abort');
+                }
+            };
+        } else {
+            startBtn.style.display = 'none';
+        }
+    }
 }
 
 // Poll for game start status
@@ -160,6 +196,14 @@ async function pollGameStart() {
     try {
         const res = await fetch(`/servers/${encodeURIComponent(serverName)}/start`);
         const data = await res.json();
+        if (data.started) {
+            // Redirect all clients to the game page when server reports it started
+            const player = new URLSearchParams(window.location.search).get('player');
+            // Navigate to the game server (assumes socket server served on port 4000 in same host)
+            // Use relative path to game.html which will load socket.io from the game server when hosted separately.
+            window.location.href = `game.html?player=${encodeURIComponent(player)}`;
+            return;
+        }
         if (data.countdown && data.countdown > 0) {
             gameStarting = true;
             gameCountdown = data.countdown;
@@ -180,16 +224,22 @@ async function sendPing() {
     const start = performance.now();
     await fetch('/servers'); // simple request to measure latency
     const ping = Math.round(performance.now() - start);
-    if (lastPing !== ping) {
-        lastPing = ping;
-        await fetch(`/servers/${encodeURIComponent(serverName)}/ping`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ player, ping })
-        });
-    }
+    lastPing = ping;
+    // Always send heartbeat so backend doesn't remove us when ping doesn't change
+    await fetch(`/servers/${encodeURIComponent(serverName)}/ping`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player, ping })
+    });
 }
-setInterval(sendPing, 3000);
+// Send pings regularly and on focus/visibility events to keep heartbeat alive
+let pingIntervalId = setInterval(sendPing, 2000);
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) sendPing();
+});
+window.addEventListener('focus', () => sendPing());
+window.addEventListener('pageshow', () => sendPing());
+window.addEventListener('pagehide', () => sendPing());
 
 // Leave server (host deletes server)
 async function leaveServer() {

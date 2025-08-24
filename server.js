@@ -8,6 +8,10 @@ const DATA_FILE = path.join(__dirname, 'servers.json');
 
 // Game start countdown state
 let gameCountdowns = {};
+// Whether a game has transitioned to started (countdown finished naturally)
+let gameStarted = {};
+// Track last heartbeat for each player (serverName -> { playerName: timestamp })
+let playerHeartbeats = {};
 
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -30,7 +34,15 @@ function saveServers() {
 // Set game start countdown
 app.post('/servers/:name/start', (req, res) => {
     const { countdown } = req.body;
+    // Setting a countdown means the host intends to start or abort.
+    // When a countdown > 0 is set, clear any previous "started" flag so clients don't redirect early.
     gameCountdowns[req.params.name] = countdown;
+    if (countdown > 0) {
+        gameStarted[req.params.name] = false;
+    } else {
+        // If host explicitly sets countdown to 0 (abort), ensure started is false.
+        gameStarted[req.params.name] = false;
+    }
     res.json({ success: true });
 });
 
@@ -39,13 +51,18 @@ setInterval(() => {
     for (const name in gameCountdowns) {
         if (gameCountdowns[name] > 0) {
             gameCountdowns[name]--;
+            // When countdown reaches 0 naturally, mark the game as started so clients can react.
+            if (gameCountdowns[name] === 0) {
+                gameStarted[name] = true;
+                console.log(`Game on '${name}' started.`);
+            }
         }
     }
 }, 1000);
 
 // Get game start countdown
 app.get('/servers/:name/start', (req, res) => {
-    res.json({ countdown: gameCountdowns[req.params.name] || 0 });
+    res.json({ countdown: gameCountdowns[req.params.name] || 0, started: !!gameStarted[req.params.name] });
 });
 
 // Get all servers
@@ -61,6 +78,9 @@ app.post('/servers', (req, res) => {
     }
     // Each server has a name, password, host, and players array
     servers.push({ name, password, host, players: [{ name: host, ping: null, ready: false }] });
+    // Initialize heartbeat for host so server isn't removed before first ping
+    if (!playerHeartbeats[name]) playerHeartbeats[name] = {};
+    playerHeartbeats[name][host] = Date.now();
     saveServers();
     res.json({ success: true });
 });
@@ -74,6 +94,9 @@ app.post('/servers/join', (req, res) => {
         return res.status(403).json({ error: 'Incorrect password' });
     }
     if (!server.players.some(p => p.name === player)) server.players.push({ name: player, ping: null, ready: false });
+    // initialize heartbeat for joining player
+    if (!playerHeartbeats[name]) playerHeartbeats[name] = {};
+    playerHeartbeats[name][player] = Date.now();
     saveServers();
     res.json({ success: true });
 });
@@ -86,6 +109,9 @@ app.post('/servers/:name/ready', (req, res) => {
     const p = server.players.find(pl => pl.name === player);
     if (p) {
         p.ready = !!ready;
+    // refresh heartbeat when player interacts
+    if (!playerHeartbeats[server.name]) playerHeartbeats[server.name] = {};
+    playerHeartbeats[server.name][player] = Date.now();
         saveServers();
     }
     res.json({ success: true });
@@ -106,8 +132,6 @@ app.get('/servers/:name/players', (req, res) => {
     res.json(server.players);
 });
 
-// Track last heartbeat for each player
-let playerHeartbeats = {};
 // Update player ping and heartbeat
 app.post('/servers/:name/ping', (req, res) => {
     const server = servers.find(s => s.name === req.params.name);
@@ -132,6 +156,8 @@ app.post('/servers/:name/kick', (req, res) => {
     if (requester !== server.host) return res.status(403).json({ error: 'Only host can kick players' });
     if (player === server.host) return res.status(400).json({ error: 'Cannot kick host' });
     server.players = server.players.filter(p => p.name !== player);
+    // remove heartbeat for kicked player
+    if (playerHeartbeats[server.name]) delete playerHeartbeats[server.name][player];
     saveServers();
     res.json({ success: true });
 });
@@ -144,10 +170,14 @@ app.post('/servers/:name/leave', (req, res) => {
     const { player } = req.body;
     if (player === server.host) {
         servers.splice(serverIdx, 1);
+        // remove heartbeat map for this server
+        if (playerHeartbeats[server.name]) delete playerHeartbeats[server.name];
         saveServers();
         return res.json({ deleted: true });
     }
     server.players = server.players.filter(p => p.name !== player);
+    // remove heartbeat for leaving player
+    if (playerHeartbeats[server.name]) delete playerHeartbeats[server.name][player];
     saveServers();
     res.json({ left: true });
 });
